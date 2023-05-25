@@ -40,6 +40,21 @@ RUN pip install \
   # Note: Installing timemory takes a long time.
   timemory==3.3.0rc4
 
+# Install perf from source to get the srcline speed patch
+COPY ./docker/files/srcline.c /tmp/srcline.c
+RUN apt-get remove -y linux-tools-generic \
+  && apt-get update \
+  && apt-get install -y flex bison glibc-source libelf-dev libdw-dev libunwind-dev libnewt-dev libgtk2.0-dev binutils-dev libnuma-dev libbabeltrace-ctf-dev libperl-dev python2-dev libiberty-dev zlib1g-dev libzstd-dev libbabeltrace-dev \
+  && rm -rf /var/lib/apt/lists/* \
+  && curl -SsL https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.15.tar.gz | tar -xzf - \
+  && cd linux-5.15/tools/perf \
+  && cat /tmp/srcline.c > util/srcline.c \
+  && make clean && make -j \
+  && make install \
+  && cp /root/bin/perf /usr/bin \
+  && cd \
+  && rm -rf linux-5.15
+
 # Check if perf is working, if not replace it with the perf version available
 RUN perf help || ( \
   mv /usr/bin/perf /usr/bin/perf.bkp && \
