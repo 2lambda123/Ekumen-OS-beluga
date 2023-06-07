@@ -58,9 +58,13 @@ public:
   };
 
   explicit OccupancyGrid(nav_msgs::msg::OccupancyGrid::SharedPtr grid)
-  : grid_(std::move(grid)), origin_(make_origin_transform(grid_->info.origin))
-  {
-  }
+  : storage_size_{grid->data.size()},
+    map_width_{grid->info.width},
+    map_height_{grid->info.height},
+    map_resolution_{grid->info.resolution},
+    origin_(make_origin_transform(grid->info.origin)),
+    storage_data_{std::move(grid->data)}
+  {}
 
   [[nodiscard]] const Sophus::SE2d & origin() const
   {
@@ -69,27 +73,28 @@ public:
 
   std::size_t size() const
   {
-    return grid_->data.size();
+    return storage_size_;
   }
+
 
   [[nodiscard]] const auto & data() const
   {
-    return grid_->data;
+    return storage_data_;
   }
 
   std::size_t width() const
   {
-    return grid_->info.width;
+    return map_width_;
   }
 
   std::size_t height() const
   {
-    return grid_->info.height;
+    return map_height_;
   }
 
   [[nodiscard]] double resolution() const
   {
-    return grid_->info.resolution;
+    return map_resolution_;
   }
 
   [[nodiscard]] auto value_traits() const
@@ -98,8 +103,13 @@ public:
   }
 
 private:
-  nav_msgs::msg::OccupancyGrid::SharedPtr grid_;
+  std::size_t storage_size_;
+  std::size_t map_width_;
+  std::size_t map_height_;
+  double map_resolution_;
   Sophus::SE2d origin_;
+  std::vector<std::int8_t> storage_data_;
+
 
   static Sophus::SE2d make_origin_transform(const geometry_msgs::msg::Pose & origin)
   {
