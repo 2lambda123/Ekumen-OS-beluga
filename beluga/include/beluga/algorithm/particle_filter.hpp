@@ -210,6 +210,9 @@ class BootstrapParticleFilter : public Mixin {
 
   template <typename ExecutionPolicy>
   void sample_impl(ExecutionPolicy&& policy) {
+    if (!this->self().do_sampling_vote()) {
+      return;
+    }
     auto states = this->self().states() | ranges::views::common;
     std::transform(
         std::forward<ExecutionPolicy>(policy), std::begin(states), std::end(states), std::begin(states),
@@ -218,6 +221,9 @@ class BootstrapParticleFilter : public Mixin {
 
   template <typename ExecutionPolicy>
   void reweight_impl(ExecutionPolicy&& policy) {
+    if (!this->self().do_reweighting_vote()) {
+      return;
+    }
     auto states = this->self().states() | ranges::views::common;
     auto weights = this->self().weights() | ranges::views::common;
     std::transform(

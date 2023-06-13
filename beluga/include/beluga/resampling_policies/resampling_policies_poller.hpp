@@ -45,6 +45,18 @@ class ResamplingPoliciesPoller : public Mixin {
   explicit ResamplingPoliciesPoller(const typename Policies::param_type&... policy_configs, Rest&&... rest)
       : Mixin(std::forward<Rest>(rest)...), policies_{policy_configs...} {}
 
+  /// Evaluate all configured sampling policies, return true only if no policy votes "no".
+  [[nodiscard]] bool do_sampling_vote() {
+    // resampling voters are queried in cascade, with short-circuit evaluation. Order matters!
+    return std::apply([this](auto&... policies) { return (policies.do_sampling(this->self()) && ...); }, policies_);
+  }
+
+  /// Evaluate all configured reweighting policies, return true only if no policy votes "no".
+  [[nodiscard]] bool do_reweighting_vote() {
+    // resampling voters are queried in cascade, with short-circuit evaluation. Order matters!
+    return std::apply([this](auto&... policies) { return (policies.do_reweighting(this->self()) && ...); }, policies_);
+  }
+
   /// Evaluate all configured resampling policies, return true only if no policy votes "no".
   /**
    * Evaluation of the policies is done one by one, in the order in which they are listed in the "Policies" template

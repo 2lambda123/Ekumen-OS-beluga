@@ -45,19 +45,39 @@ class ResampleIntervalPolicy {
    */
   explicit ResampleIntervalPolicy(const param_type& configuration) : configuration_{configuration} {}
 
+  /// Vote whether sampling must be done according to this policy.
+  /**
+   * \tparam Concrete Type representing the concrete implementation of the filter.
+   */
+  template <typename Concrete>
+  [[nodiscard]] bool do_sampling([[maybe_unused]] Concrete& filter) {
+    filter_update_counter_ = (filter_update_counter_ + 1) % configuration_.resample_interval_count;
+    do_resampling_ = (filter_update_counter_ == 0);
+    return do_resampling_;
+  }
+
+  /// Vote whether reweighting must be done according to this policy.
+  /**
+   * \tparam Concrete Type representing the concrete implementation of the filter.
+   */
+  template <typename Concrete>
+  [[nodiscard]] bool do_reweighting([[maybe_unused]] Concrete& filter) {
+    return do_resampling_;
+  }
+
   /// Vote whether resampling must be done according to this policy.
   /**
    * \tparam Concrete Type representing the concrete implementation of the filter.
    */
   template <typename Concrete>
   [[nodiscard]] bool do_resampling([[maybe_unused]] Concrete& filter) {
-    filter_update_counter_ = (filter_update_counter_ + 1) % configuration_.resample_interval_count;
-    return (filter_update_counter_ == 0);
+    return do_resampling_;
   }
 
  private:
   param_type configuration_;              //< Policy configuration
   std::size_t filter_update_counter_{0};  //< Current cycle phase
+  bool do_resampling_{false};             //< Whether resampling must be done
 };
 
 }  // namespace beluga

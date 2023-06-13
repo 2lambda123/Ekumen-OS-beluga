@@ -57,37 +57,56 @@ class ResampleOnMotionPolicy {
    * It must satisfy the \ref MotionModelPage MotionModel requirements.
    */
   template <typename Concrete>
-  [[nodiscard]] bool do_resampling(Concrete& filter) {
+  [[nodiscard]] bool do_sampling([[maybe_unused]] Concrete& filter) {
+    return true;
+  }
+
+  /// Vote whether reweighting must be done according to this policy.
+  /**
+   * \tparam Concrete Type representing the concrete implementation of the filter.
+   */
+  template <typename Concrete>
+  [[nodiscard]] bool do_reweighting(Concrete& filter) {
     // To avoid loss of diversity in the particle population, don't
     // resample when the state is known to be static.
     // Probabilistic Robotics \cite thrun2005probabilistic Chapter 4.2.4.
     auto current_pose = filter.latest_motion_update();
 
     // default to letting other policies decide
-    bool must_do_resample{true};
+    must_do_resample_ = true;
 
     if (current_pose && latest_resample_pose_) {
       // calculate relative transform between previous pose and the current one
       const auto delta = latest_resample_pose_->inverse() * current_pose.value();
 
       // only resample if movement is above thresholds
-      must_do_resample =  //
+      must_do_resample_ =  //
           std::abs(delta.translation().x()) > configuration_.update_min_d ||
           std::abs(delta.translation().y()) > configuration_.update_min_d ||
           std::abs(delta.so2().log()) > configuration_.update_min_a;
     }
 
     // we always measure the distance traveled since the last time we did resample
-    if (must_do_resample) {
+    if (must_do_resample_) {
       latest_resample_pose_ = current_pose;
     }
 
-    return must_do_resample;
+    return must_do_resample_;
+  }
+
+  /// Vote whether resampling must be done according to this policy.
+  /**
+   * \tparam Concrete Type representing the concrete implementation of the filter.
+   */
+  template <typename Concrete>
+  [[nodiscard]] bool do_resampling([[maybe_unused]] Concrete& filter) {
+    return must_do_resample_;
   }
 
  private:
   param_type configuration_;
   std::optional<motion_event> latest_resample_pose_;
+  bool must_do_resample_{false};
 };
 
 }  // namespace beluga

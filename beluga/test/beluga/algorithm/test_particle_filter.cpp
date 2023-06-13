@@ -50,6 +50,8 @@ class MockMixin : public Mixin {
  public:
   MOCK_METHOD(double, apply_motion, (double state), (const));
   MOCK_METHOD(double, importance_weight, (double state), (const));
+  MOCK_METHOD(bool, do_sampling_vote, ());
+  MOCK_METHOD(bool, do_reweighting_vote, ());
   MOCK_METHOD(bool, do_resampling_vote, ());
 
   auto particles() { return particles_ | ranges::views::common; }
@@ -109,6 +111,8 @@ TEST(BootstrapParticleFilter, UpdateWithoutResampling) {
 
   EXPECT_CALL(filter, apply_motion(::testing::_)).WillRepeatedly(ReturnPointee(&expected_final_state));
   EXPECT_CALL(filter, importance_weight(::testing::_)).WillRepeatedly(Return(weight_reduction_factor));
+  EXPECT_CALL(filter, do_sampling_vote()).WillRepeatedly(Return(true));
+  EXPECT_CALL(filter, do_reweighting_vote()).WillRepeatedly(Return(true));
   EXPECT_CALL(filter, do_resampling_vote()).WillRepeatedly(Return(false));
 
   for (auto iteration = 0; iteration < 5; ++iteration) {
@@ -146,6 +150,8 @@ TEST(BootstrapParticleFilter, UpdateWithResampling) {
 
   EXPECT_CALL(filter, apply_motion(::testing::_)).WillRepeatedly(ReturnPointee(&expected_final_state));
   EXPECT_CALL(filter, importance_weight(::testing::_)).WillRepeatedly(Return(weight_reduction_factor));
+  EXPECT_CALL(filter, do_sampling_vote()).WillRepeatedly(Return(true));
+  EXPECT_CALL(filter, do_reweighting_vote()).WillRepeatedly(Return(true));
   EXPECT_CALL(filter, do_resampling_vote()).WillRepeatedly(Return(true));
 
   for (auto iteration = 0; iteration < 4; ++iteration) {

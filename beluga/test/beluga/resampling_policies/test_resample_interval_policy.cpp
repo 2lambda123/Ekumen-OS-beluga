@@ -47,9 +47,13 @@ TEST_P(ResampleIntervalPolicyTestsWithParam, ResampleEveryNthIteration) {
   for (size_t i = 0; i < periods; ++i) {
     // don't resample for the first N-1 iterations
     for (size_t iteration = 0; iteration < interval - 1; ++iteration) {
+      ASSERT_FALSE(uut.do_sampling_vote());
+      ASSERT_FALSE(uut.do_reweighting_vote());
       ASSERT_FALSE(uut.do_resampling_vote());
     }
     // then resample once
+    ASSERT_TRUE(uut.do_sampling_vote());
+    ASSERT_TRUE(uut.do_reweighting_vote());
     ASSERT_TRUE(uut.do_resampling_vote());
   }
 }

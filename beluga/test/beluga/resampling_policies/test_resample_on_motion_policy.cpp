@@ -65,22 +65,32 @@ TEST_F(ResampleOnMotionPolicyTests, MotionUpdatesEnableResampling) {
   UUT uut{params};
 
   // when there's no motion data, policy should default to true
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_TRUE(uut.do_reweighting_vote());
   ASSERT_TRUE(uut.do_resampling_vote());
 
   // first motion update, still not enough data, will default to allowing sampling
   uut.update_motion(make_motion_update_event(0, 0, 0));
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_TRUE(uut.do_reweighting_vote());
   ASSERT_TRUE(uut.do_resampling_vote());
 
   // second motion update, enough data, but we are not moving
   uut.update_motion(make_motion_update_event(0, 0, 0));
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_FALSE(uut.do_reweighting_vote());
   ASSERT_FALSE(uut.do_resampling_vote());
 
   // still no motion
   uut.update_motion(make_motion_update_event(0, 0, 0));
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_FALSE(uut.do_reweighting_vote());
   ASSERT_FALSE(uut.do_resampling_vote());
 
   // still no motion (thresholds are calculated independently for each axis)
   uut.update_motion(make_motion_update_event(d_threshold * 0.99, d_threshold * 0.99, a_threshold * 0.99));
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_FALSE(uut.do_reweighting_vote());
   ASSERT_FALSE(uut.do_resampling_vote());
 
   // back to origin
@@ -88,18 +98,26 @@ TEST_F(ResampleOnMotionPolicyTests, MotionUpdatesEnableResampling) {
 
   // motion above threshold for axis x
   uut.update_motion(make_motion_update_event(d_threshold * 1.01, 0.0, 0.0));
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_TRUE(uut.do_reweighting_vote());
   ASSERT_TRUE(uut.do_resampling_vote());
 
   // motion above threshold for axis y
   uut.update_motion(make_motion_update_event(d_threshold * 1.01, d_threshold * 1.01, 0.0));
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_TRUE(uut.do_reweighting_vote());
   ASSERT_TRUE(uut.do_resampling_vote());
 
   // motion above threshold for angular motion
   uut.update_motion(make_motion_update_event(d_threshold * 1.01, d_threshold * 1.01, a_threshold * 1.01));
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_TRUE(uut.do_reweighting_vote());
   ASSERT_TRUE(uut.do_resampling_vote());
 
   // no relative motion again
   uut.update_motion(make_motion_update_event(d_threshold * 1.01, d_threshold * 1.01, a_threshold * 1.01));
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_FALSE(uut.do_reweighting_vote());
   ASSERT_FALSE(uut.do_resampling_vote());
 }
 
@@ -112,14 +130,20 @@ TEST_F(ResampleOnMotionPolicyTests, ThresholdsAreRelativeToLatestResamplingPose)
   UUT uut{params};
 
   // when there's no motion data, policy should default to true
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_TRUE(uut.do_reweighting_vote());
   ASSERT_TRUE(uut.do_resampling_vote());
 
   // first motion update, still not enough data, will default to allowing sampling
   uut.update_motion(make_motion_update_event(0, 0, 0));
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_TRUE(uut.do_reweighting_vote());
   ASSERT_TRUE(uut.do_resampling_vote());
 
   // second motion update, enough data, but we are not moving
   uut.update_motion(make_motion_update_event(0, 0, 0));
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_FALSE(uut.do_reweighting_vote());
   ASSERT_FALSE(uut.do_resampling_vote());
 
   const auto pivot_distance = d_threshold * 10.0;
@@ -128,6 +152,8 @@ TEST_F(ResampleOnMotionPolicyTests, ThresholdsAreRelativeToLatestResamplingPose)
 
   // move to 10x the threshold, forcing resampling to take place
   uut.update_motion(make_motion_update_event(pivot_distance, 0.0, 0.0));
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_TRUE(uut.do_reweighting_vote());
   ASSERT_TRUE(uut.do_resampling_vote());
 
   // move to the lower bound, then forward to the upper bound, then back to the lower bound and finally back to the
@@ -135,18 +161,30 @@ TEST_F(ResampleOnMotionPolicyTests, ThresholdsAreRelativeToLatestResamplingPose)
   // than a threshold from the pivot where we last resampled, so none of the steps should cause additoinal resamples
   // value, because we never get farther away from the pivot than the treshold value.
   uut.update_motion(make_motion_update_event(pivot_distance, 0.0, 0.0));
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_FALSE(uut.do_reweighting_vote());
   ASSERT_FALSE(uut.do_resampling_vote());
   uut.update_motion(make_motion_update_event(lower_bound, 0.0, 0.0));
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_FALSE(uut.do_reweighting_vote());
   ASSERT_FALSE(uut.do_resampling_vote());
   uut.update_motion(make_motion_update_event(upper_bound, 0.0, 0.0));
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_FALSE(uut.do_reweighting_vote());
   ASSERT_FALSE(uut.do_resampling_vote());
   uut.update_motion(make_motion_update_event(lower_bound, 0.0, 0.0));
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_FALSE(uut.do_reweighting_vote());
   ASSERT_FALSE(uut.do_resampling_vote());
   uut.update_motion(make_motion_update_event(upper_bound, 0.0, 0.0));
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_FALSE(uut.do_reweighting_vote());
   ASSERT_FALSE(uut.do_resampling_vote());
 
   // resample when we move a full threshold from the pivot
   uut.update_motion(make_motion_update_event(pivot_distance + d_threshold * 1.01, 0.0, 0.0));
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_TRUE(uut.do_reweighting_vote());
   ASSERT_TRUE(uut.do_resampling_vote());
 }
 
@@ -161,6 +199,8 @@ TEST_F(ResampleOnMotionPolicyTests, RandomWalkingTest) {
   UUT uut{params};
 
   // when there's no motion data, policy should default to true
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_TRUE(uut.do_reweighting_vote());
   ASSERT_TRUE(uut.do_resampling_vote());
 
   // list of pairs of relative motion from the previous pose, and the expected
@@ -218,8 +258,12 @@ TEST_F(ResampleOnMotionPolicyTests, RandomWalkingTest) {
 
   // warm-up the internal state of the policy
   uut.update_motion(current_pose);
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_TRUE(uut.do_reweighting_vote());
   ASSERT_TRUE(uut.do_resampling_vote());
   uut.update_motion(current_pose);
+  ASSERT_TRUE(uut.do_sampling_vote());
+  ASSERT_FALSE(uut.do_reweighting_vote());
   ASSERT_FALSE(uut.do_resampling_vote());
 
   for (const auto& test_tuple : relative_motions) {
@@ -228,6 +272,8 @@ TEST_F(ResampleOnMotionPolicyTests, RandomWalkingTest) {
     // apply the relative motion on top of the current pose and test the result
     current_pose = current_pose * relative_movement;
     uut.update_motion(current_pose);
+    ASSERT_EQ(true, uut.do_sampling_vote());
+    ASSERT_EQ(expected_resampling_flag, uut.do_reweighting_vote());
     ASSERT_EQ(expected_resampling_flag, uut.do_resampling_vote());
   }
 }

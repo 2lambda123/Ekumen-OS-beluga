@@ -50,6 +50,24 @@ class SelectiveResamplingPolicy {
    */
   explicit SelectiveResamplingPolicy(const param_type& configuration) : configuration_{configuration} {}
 
+  /// Vote whether reweighting must be done according to this policy.
+  /**
+   * \tparam Concrete Type representing the concrete implementation of the filter.
+   */
+  template <typename Concrete>
+  [[nodiscard]] bool do_sampling([[maybe_unused]] Concrete& filter) {
+    return true;
+  }
+
+  /// Vote whether resampling must be done according to this policy.
+  /**
+   * \tparam Concrete Type representing the concrete implementation of the filter.
+   */
+  template <typename Concrete>
+  [[nodiscard]] bool do_reweighting([[maybe_unused]] Concrete& filter) {
+    return true;
+  }
+
   /// Vote whether resampling must be done according to this policy.
   /**
    * \tparam Concrete Type representing the concrete implementation of the filter.
