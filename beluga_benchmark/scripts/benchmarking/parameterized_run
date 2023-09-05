@@ -122,7 +122,7 @@ for N in $@; do
     script -qefc " \
         ros2 launch beluga_example perfect_odometry.launch.xml amcl.max_particles:=${N} amcl.min_particles:=${N} \
             record_bag:=True bagfile_output:=rosbag localization_prefix:=\"timem -o timem-output --\" $EXTRA_LAUNCH_ARGS" \
-        /dev/null &
+        output.log &
     while ! pgrep "$EXECUTABLE_NAME" > /dev/null; do
         sleep .1
     done
