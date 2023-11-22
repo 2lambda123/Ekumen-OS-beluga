@@ -73,7 +73,7 @@ void BelugaAprilTagAdapterNode::republishAsFeatures(const apriltag_msgs::msg::Ap
 
 void BelugaAprilTagAdapterNode::republishAsMarkers(
     [[maybe_unused]] const apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr det) {
-  constexpr double kSideLength = 0.1;
+  constexpr double kSideLength = 0.13;
 
   int seq_id = 0;
   static int max_seq_id = 0;
@@ -85,14 +85,14 @@ void BelugaAprilTagAdapterNode::republishAsMarkers(
     marker.header.stamp = det->header.stamp;
     marker.id = seq_id++;
     marker.ns = "detections";
-    marker.type = visualization_msgs::msg::Marker::CUBE;
+    marker.type = visualization_msgs::msg::Marker::SPHERE;
     marker.action = visualization_msgs::msg::Marker::ADD;
-    marker.pose.position = detection.pose.pose.pose.position;
+    marker.pose = detection.pose.pose.pose;
     marker.scale.x = kSideLength;
     marker.scale.y = kSideLength;
     marker.scale.z = kSideLength;
     marker.color.a = 1.0;
-    marker.color.r = 1.0;
+    marker.color.r = 0.0;
     marker.color.g = 1.0;
     marker.color.b = 0.0;
     msg.markers.push_back(marker);
@@ -105,7 +105,7 @@ void BelugaAprilTagAdapterNode::republishAsMarkers(
     marker.header.stamp = det->header.stamp;
     marker.id = i;
     marker.ns = "detections";
-    marker.type = visualization_msgs::msg::Marker::CUBE;
+    marker.type = visualization_msgs::msg::Marker::SPHERE;
     marker.action = visualization_msgs::msg::Marker::DELETE;
     msg.markers.push_back(marker);
   }
