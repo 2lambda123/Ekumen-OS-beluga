@@ -39,7 +39,7 @@ find_package(rclcpp_components REQUIRED)
 
 find_package(apriltag_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
-find_package(beluga_feature_map_server_msgs REQUIRED)
+find_package(beluga_april_tag_adapter_msgs REQUIRED)
 
 add_library(beluga_april_tag_adapter_component SHARED)
 target_include_directories(beluga_april_tag_adapter_component PUBLIC include)
@@ -51,7 +51,7 @@ ament_target_dependencies(
   beluga_april_tag_adapter_component
   PUBLIC rclcpp
          rclcpp_components
-         beluga_feature_map_server_msgs
+         beluga_april_tag_adapter_msgs
          visualization_msgs
          apriltag_msgs)
 

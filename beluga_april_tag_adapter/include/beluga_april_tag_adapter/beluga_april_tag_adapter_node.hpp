@@ -17,7 +17,7 @@
 
 // external
 #include <apriltag_msgs/msg/april_tag_detection_array.hpp>
-#include <beluga_feature_map_server_msgs/msg/discrete_feature_map.hpp>
+#include <beluga_april_tag_adapter_msgs/msg/feature_detections.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -34,7 +34,7 @@ class BelugaAprilTagAdapterNode : public rclcpp::Node {
 
  private:
   rclcpp::Subscription<apriltag_msgs::msg::AprilTagDetectionArray>::SharedPtr tag_subscriber_;
-  rclcpp::Publisher<beluga_feature_map_server_msgs::msg::DiscreteFeatureMap>::SharedPtr detections_republisher_;
+  rclcpp::Publisher<beluga_april_tag_adapter_msgs::msg::FeatureDetections>::SharedPtr detections_republisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_republisher_;
 
   void tagDetectionsCallback(const apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr msg);

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // external
-#include <beluga_feature_map_server_msgs/msg/discrete_feature_map.hpp>
+#include <beluga_april_tag_adapter_msgs/msg/feature_detections.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -46,7 +46,7 @@ BelugaAprilTagAdapterNode::BelugaAprilTagAdapterNode(const rclcpp::NodeOptions& 
       "tag_detections", rclcpp::SystemDefaultsQoS(),
       std::bind(&BelugaAprilTagAdapterNode::tagDetectionsCallback, this, std::placeholders::_1));
 
-  detections_republisher_ = this->create_publisher<beluga_feature_map_server_msgs::msg::DiscreteFeatureMap>(
+  detections_republisher_ = this->create_publisher<beluga_april_tag_adapter_msgs::msg::FeatureDetections>(
       "feature_detections", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
 
   marker_republisher_ =
@@ -59,7 +59,7 @@ void BelugaAprilTagAdapterNode::tagDetectionsCallback(const apriltag_msgs::msg::
 }
 
 void BelugaAprilTagAdapterNode::republishAsFeatures(const apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr det) {
-  beluga_feature_map_server_msgs::msg::DiscreteFeatureMap msg;
+  beluga_april_tag_adapter_msgs::msg::FeatureDetections msg;
   msg.header = det->header;
 
   for (const auto& detection : det->detections) {
@@ -73,7 +73,7 @@ void BelugaAprilTagAdapterNode::republishAsFeatures(const apriltag_msgs::msg::Ap
 
 void BelugaAprilTagAdapterNode::republishAsMarkers(
     [[maybe_unused]] const apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr det) {
-  constexpr double kSideLength = 0.13;
+  constexpr double kSideLength = 0.11;
 
   int seq_id = 0;
   static int max_seq_id = 0;
@@ -85,7 +85,7 @@ void BelugaAprilTagAdapterNode::republishAsMarkers(
     marker.header.stamp = det->header.stamp;
     marker.id = seq_id++;
     marker.ns = "detections";
-    marker.type = visualization_msgs::msg::Marker::SPHERE;
+    marker.type = visualization_msgs::msg::Marker::CUBE;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose = detection.pose.pose.pose;
     marker.scale.x = kSideLength;
@@ -105,7 +105,7 @@ void BelugaAprilTagAdapterNode::republishAsMarkers(
     marker.header.stamp = det->header.stamp;
     marker.id = i;
     marker.ns = "detections";
-    marker.type = visualization_msgs::msg::Marker::SPHERE;
+    marker.type = visualization_msgs::msg::Marker::CUBE;
     marker.action = visualization_msgs::msg::Marker::DELETE;
     msg.markers.push_back(marker);
   }
