@@ -92,8 +92,8 @@ void BelugaAprilTagAdapterNode::republishAsMarkers(
     marker.scale.y = kSideLength;
     marker.scale.z = kSideLength;
     marker.color.a = 1.0;
-    marker.color.r = 0.0;
-    marker.color.g = 1.0;
+    marker.color.r = 1.0;
+    marker.color.g = 0.0;
     marker.color.b = 0.0;
     msg.markers.push_back(marker);
   }
