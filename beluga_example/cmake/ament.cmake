@@ -29,6 +29,11 @@ install(
   DESTINATION share/${PROJECT_NAME}
   PATTERN "*.launch" EXCLUDE)
 
+
+add_executable(pc scripts/pc.cpp)
+install(TARGETS pc DESTINATION lib/${PROJECT_NAME})
+# target_link_libraries(pc ${PROJECT_NAME})
+
 install(
   DIRECTORY rviz
   DESTINATION share/${PROJECT_NAME}
