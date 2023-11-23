@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(beluga_amcl REQUIRED)
+find_package(cilantro REQUIRED)
+
 
 ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR
                              ${PROJECT_SOURCE_DIR}/${PROJECT_NAME})
@@ -32,7 +35,7 @@ install(
 
 add_executable(pc scripts/pc.cpp)
 install(TARGETS pc DESTINATION lib/${PROJECT_NAME})
-# target_link_libraries(pc ${PROJECT_NAME})
+target_link_libraries(pc cilantro)
 
 install(
   DIRECTORY rviz
