@@ -134,6 +134,13 @@ class LandmarkBasedMonteCarloLocalizationNode : public rclcpp::Node {
  public:
   explicit LandmarkBasedMonteCarloLocalizationNode(const rclcpp::NodeOptions& options)
       : rclcpp::Node("lmcl_example_node", options) {
+    constexpr bool kUseDedicatedThread = true;
+    tf_buffer_ = std::make_unique<tf2_ros::Buffer>(get_clock());
+    tf_buffer_->setCreateTimerInterface(
+        std::make_shared<tf2_ros::CreateTimerROS>(get_node_base_interface(), get_node_timers_interface()));
+    tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_, this, !kUseDedicatedThread);
+    tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
+
     auto common_callback_group = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     auto common_subscription_options = rclcpp::SubscriptionOptions{};
     common_subscription_options.callback_group = common_callback_group;
@@ -177,13 +184,6 @@ class LandmarkBasedMonteCarloLocalizationNode : public rclcpp::Node {
           std::bind(&LandmarkBasedMonteCarloLocalizationNode::feature_detections_callback, this, _1));
       RCLCPP_INFO(get_logger(), "Subscribed to %s topic", feature_detections_sub_->getTopic().c_str());
     }
-
-    constexpr bool kUseDedicatedThread = true;
-    tf_buffer_ = std::make_unique<tf2_ros::Buffer>(get_clock());
-    tf_buffer_->setCreateTimerInterface(
-        std::make_shared<tf2_ros::CreateTimerROS>(get_node_base_interface(), get_node_timers_interface()));
-    tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_, this, !kUseDedicatedThread);
-    tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
 
     particle_cloud_pub_ = create_publisher<nav2_msgs::msg::ParticleCloud>("particle_cloud", rclcpp::SensorDataQoS());
     pose_pub_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("pose", rclcpp::SystemDefaultsQoS());
