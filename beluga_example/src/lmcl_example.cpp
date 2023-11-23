@@ -406,7 +406,7 @@ class LandmarkBasedMonteCarloLocalizationNode : public rclcpp::Node {
 
   const std::string kMapFrameID = "map";
   const std::string kOdomFrameID = "odom";
-  const std::string kBaseFrameID = "base_footprint";
+  const std::string kBaseFrameID = "base_link";
   static constexpr double kTransformTolerance = 1.0;
   static constexpr int kResampleIntervalCount = 5;
 
