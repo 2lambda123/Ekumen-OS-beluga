@@ -227,14 +227,15 @@ class LandmarkBasedMonteCarloLocalizationNode : public rclcpp::Node {
     const auto motion_delta = last_odom_to_base_transform_
                                   ? last_odom_to_base_transform_->inverse() * odom_to_base_transform
                                   : Sophus::SE2d{};
-    last_odom_to_base_transform_ = odom_to_base_transform;
 
     const bool moved_enough = std::abs(motion_delta.translation().x()) > 0.25 ||
                               std::abs(motion_delta.translation().y()) > 0.25 ||
                               std::abs(motion_delta.so2().log()) > 0.2;
 
+    const bool have_enough_features = features->positions.size() > 1;
+
     bool did_update = false;
-    if (force_update_ || moved_enough) {
+    if (force_update_ || (moved_enough && have_enough_features)) {
       particle_filter_->update_motion(odom_to_base_transform);
       particle_filter_->sample(std::execution::seq);
 
@@ -256,6 +257,8 @@ class LandmarkBasedMonteCarloLocalizationNode : public rclcpp::Node {
         particle_filter_->resample();
         did_update = true;
       }
+
+      last_odom_to_base_transform_ = odom_to_base_transform;
     }
     force_update_ = false;
 
@@ -323,7 +326,7 @@ class LandmarkBasedMonteCarloLocalizationNode : public rclcpp::Node {
 
     auto sensor_model_params = beluga::LandmarkModelParam{};
     sensor_model_params.sigma_bearing = 0.2;
-    sensor_model_params.sigma_range = 0.2;
+    sensor_model_params.sigma_range = 0.1;
 
     double xmin = std::numeric_limits<double>::infinity();
     double ymin = std::numeric_limits<double>::infinity();
@@ -350,7 +353,8 @@ class LandmarkBasedMonteCarloLocalizationNode : public rclcpp::Node {
       const auto& [pose, covariance] = last_known_estimate_.value();
       initialize(pose, covariance);
     } else {
-      initialize(Sophus::SE2d{}, Eigen::Matrix3d::Identity() * 0.25);
+      auto initial_pose = Sophus::SE2d{Sophus::SO2d{}, Eigen::Vector2d{0., 2.}};
+      initialize(initial_pose, Eigen::Matrix3d::Identity() * 0.25);
     }
   }
 
@@ -408,7 +412,7 @@ class LandmarkBasedMonteCarloLocalizationNode : public rclcpp::Node {
   const std::string kOdomFrameID = "odom";
   const std::string kBaseFrameID = "base_link";
   static constexpr double kTransformTolerance = 1.0;
-  static constexpr int kResampleIntervalCount = 5;
+  static constexpr int kResampleIntervalCount = 1;
 
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   std::unique_ptr<tf2_ros::TransformListener> tf_listener_;
