@@ -103,6 +103,13 @@ RUN sudo apt-get update \
 
 COPY --from=cacher --chown=$USER:$GROUP /ws/ $USER_WS/
 
+RUN git clone https://github.com/kzampog/cilantro.git && \
+cd cilantro &&  \
+mkdir build && \
+cd build && \
+cmake .. && \
+make -j 
+
 ENV WITHIN_DEV 1
 
 ENV SHELL /bin/bash
