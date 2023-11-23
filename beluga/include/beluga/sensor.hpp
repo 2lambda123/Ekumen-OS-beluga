@@ -18,6 +18,8 @@
 #include <beluga/sensor/beam_model.hpp>
 #include <beluga/sensor/likelihood_field_model.hpp>
 
+#include <beluga/sensor/landmark_model.hpp>
+
 #include <tuple>
 #include <vector>
 
