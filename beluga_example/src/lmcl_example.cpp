@@ -163,19 +163,19 @@ class LandmarkBasedMonteCarloLocalizationNode : public rclcpp::Node {
     }
 
     {
-      features_sub_ =
+      feature_detections_sub_ =
           std::make_unique<message_filters::Subscriber<beluga_april_tag_adapter_msgs::msg::FeatureDetections>>(
-              this, "features", rmw_qos_profile_sensor_data, common_subscription_options);
+              this, "feature_detections", rmw_qos_profile_sensor_data, common_subscription_options);
 
-      features_filter_ =
+      feature_detections_filter_ =
           std::make_unique<tf2_ros::MessageFilter<beluga_april_tag_adapter_msgs::msg::FeatureDetections>>(
-              *features_sub_, *tf_buffer_, kOdomFrameID, 10, get_node_logging_interface(), get_node_clock_interface(),
-              tf2::durationFromSec(kTransformTolerance));
+              *feature_detections_sub_, *tf_buffer_, kOdomFrameID, 10, get_node_logging_interface(),
+              get_node_clock_interface(), tf2::durationFromSec(kTransformTolerance));
 
       using namespace std::placeholders;
-      features_connection_ = features_filter_->registerCallback(
-          std::bind(&LandmarkBasedMonteCarloLocalizationNode::features_callback, this, _1));
-      RCLCPP_INFO(get_logger(), "Subscribed to %s topic", features_sub_->getTopic().c_str());
+      feature_detections_connection_ = feature_detections_filter_->registerCallback(
+          std::bind(&LandmarkBasedMonteCarloLocalizationNode::feature_detections_callback, this, _1));
+      RCLCPP_INFO(get_logger(), "Subscribed to %s topic", feature_detections_sub_->getTopic().c_str());
     }
 
     constexpr bool kUseDedicatedThread = true;
@@ -190,7 +190,8 @@ class LandmarkBasedMonteCarloLocalizationNode : public rclcpp::Node {
   }
 
  private:
-  void features_callback(const beluga_april_tag_adapter_msgs::msg::FeatureDetections::ConstSharedPtr& features) {
+  void feature_detections_callback(
+      const beluga_april_tag_adapter_msgs::msg::FeatureDetections::ConstSharedPtr& features) {
     if (!particle_filter_) {
       RCLCPP_WARN_THROTTLE(
           get_logger(), *get_clock(), 2000,
@@ -424,9 +425,11 @@ class LandmarkBasedMonteCarloLocalizationNode : public rclcpp::Node {
   rclcpp::Publisher<nav2_msgs::msg::ParticleCloud>::SharedPtr particle_cloud_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub_;
 
-  std::unique_ptr<message_filters::Subscriber<beluga_april_tag_adapter_msgs::msg::FeatureDetections>> features_sub_;
-  std::unique_ptr<tf2_ros::MessageFilter<beluga_april_tag_adapter_msgs::msg::FeatureDetections>> features_filter_;
-  message_filters::Connection features_connection_;
+  std::unique_ptr<message_filters::Subscriber<beluga_april_tag_adapter_msgs::msg::FeatureDetections>>
+      feature_detections_sub_;
+  std::unique_ptr<tf2_ros::MessageFilter<beluga_april_tag_adapter_msgs::msg::FeatureDetections>>
+      feature_detections_filter_;
+  message_filters::Connection feature_detections_connection_;
 
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<beluga_feature_map_server_msgs::msg::DiscreteFeatureMap>::SharedPtr feature_map_sub_;
