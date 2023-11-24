@@ -32,6 +32,7 @@ add_executable(
   sensor/data/test_occupancy_grid.cpp
   sensor/data/test_regular_grid.cpp
   sensor/test_beam_model.cpp
+  sensor/test_landmark_bearing_model.cpp
   sensor/test_landmark_model.cpp
   sensor/test_likelihood_field_model.cpp
   test_mixin.cpp

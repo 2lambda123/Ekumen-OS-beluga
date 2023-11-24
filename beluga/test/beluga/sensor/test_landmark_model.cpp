@@ -40,7 +40,7 @@ double cubed(double v) {
 
 TEST(LandmarkSensorModel, SmokeTest) {
   // test case where the landmark is exactly where we expected it
-  UUT uut(GetParams(), LandmarkMap({0., 0., 10., 10.}, {{1.0, 2.0, 0}}));
+  UUT uut(GetParams(), LandmarkMap({0., 0., 10., 10.}, {{1.0, 2.0, 0.0, 0}}));
 
   ASSERT_NO_THROW(uut.update_sensor({{1.0, 2.0, 0}}));
 
@@ -50,7 +50,7 @@ TEST(LandmarkSensorModel, SmokeTest) {
 
 TEST(LandmarkSensorModel, OneStdInX) {
   // test case where the landmark is 1 std offset from the expected position
-  UUT uut(GetParams(), LandmarkMap({0., 0., 10., 10.}, {{1.0, 0.0, 0}}));
+  UUT uut(GetParams(), LandmarkMap({0., 0., 10., 10.}, {{1.0, 0.0, 0.0, 0}}));
   ASSERT_NO_THROW(uut.update_sensor({{2.0, 0.0, 0}}));
   // robot in the map origin
   EXPECT_NEAR(cubed(0.6), uut.importance_weight(Sophus::SE2d{Sophus::SO2d{}, Eigen::Vector2d{0.0, 0.0}}), 1e-02);
@@ -58,7 +58,7 @@ TEST(LandmarkSensorModel, OneStdInX) {
 
 TEST(LandmarkSensorModel, OneStdInY) {
   // test case where the landmark is 1 std offset from the expected position
-  UUT uut(GetParams(), LandmarkMap({0., 0., 10., 10.}, {{0.0, 1.0, 0}}));
+  UUT uut(GetParams(), LandmarkMap({0., 0., 10., 10.}, {{0.0, 1.0, 0.0, 0}}));
   ASSERT_NO_THROW(uut.update_sensor({{0.0, 2.0, 0}}));
   // robot in the map origin
   EXPECT_NEAR(cubed(0.6), uut.importance_weight(Sophus::SE2d{Sophus::SO2d{}, Eigen::Vector2d{0.0, 0.0}}), 1e-02);
@@ -67,7 +67,7 @@ TEST(LandmarkSensorModel, OneStdInY) {
 TEST(LandmarkSensorModel, NoSuchLandmark) {
   // test case where there is not landmark in the map of the type of the
   // observed ones
-  UUT uut(GetParams(), LandmarkMap({0., 0., 10., 10.}, {{0.0, 1.0, 99}}));
+  UUT uut(GetParams(), LandmarkMap({0., 0., 10., 10.}, {{0.0, 1.0, 0.0, 99}}));
   ASSERT_NO_THROW(uut.update_sensor({{0.0, 2.0, 88}}));
   // robot in the map origin
   EXPECT_NEAR(cubed(0.0), uut.importance_weight(Sophus::SE2d{Sophus::SO2d{}, Eigen::Vector2d{0.0, 0.0}}), 1e-02);

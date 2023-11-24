@@ -340,7 +340,7 @@ class LandmarkBasedMonteCarloLocalizationNode : public rclcpp::Node {
       xmax = std::min(feature_map->positions[i].x, xmax);
       ymax = std::min(feature_map->positions[i].y, ymax);
       landmarks.emplace_back(
-          feature_map->positions[i].x, feature_map->positions[i].y,
+          feature_map->positions[i].x, feature_map->positions[i].y, feature_map->positions[i].z,
           !feature_map->categories.empty() ? feature_map->categories[i] : 0);
     }
     auto extents = beluga::LandmarkMap::map_boundaries(xmin, xmax, ymin, ymax);

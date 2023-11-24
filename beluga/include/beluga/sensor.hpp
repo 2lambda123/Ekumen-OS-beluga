@@ -129,6 +129,41 @@ struct LandmarkSensorModelInterface2d {
   virtual void update_map(Map&& map) = 0;
 };
 
+/// Pure abstract class representing the laser sensor model interface.
+/**
+ * \tparam Map Environment representation type.
+ */
+template <class Map>
+struct LandmarkBearingSensorModelInterface {
+  /// Measurement type of the sensor: a point cloud for the range finder.
+  using measurement_type = std::vector<std::tuple<double, double, double, uint32_t>>;
+
+  /// Virtual destructor.
+  virtual ~LandmarkBearingSensorModelInterface() = default;
+
+  /// Update the sensor model with the measured points.
+  /**
+   * This method updates the sensor model with the information
+   * it needs to compute the weight of each particle.
+   * The weight of each particle is calculated by subsequent calls to
+   * the `importance_weight()` method provided by the same mixin
+   * component.
+   *
+   * \param points The discrete sensor detections in the reference frame of the particle.
+   */
+  virtual void update_sensor(measurement_type&& points) = 0;
+
+  /// Update the sensor model with a new map.
+  /**
+   * This method updates the sensor model with a new map,
+   * i.e. a representation of the environment, that it needs
+   * to compute the weight of each particle.
+   *
+   * \param map The range finder map.
+   */
+  virtual void update_map(Map&& map) = 0;
+};
+
 }  // namespace beluga
 
 #endif

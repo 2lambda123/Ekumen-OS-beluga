@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BELUGA_SENSOR_LANDMARK_MODEL_HPP
-#define BELUGA_SENSOR_LANDMARK_MODEL_HPP
+#ifndef BELUGA_SENSOR_LANDMARK_BEARING_MODEL_HPP
+#define BELUGA_SENSOR_LANDMARK_BEARING_MODEL_HPP
 
 // external
 #include <sophus/se2.hpp>
-#include <sophus/so2.hpp>
+#include <sophus/se3.hpp>
 
 // project
 #include <range/v3/range/conversion.hpp>
@@ -38,18 +38,18 @@
 
 namespace beluga {
 
-/// Parameters used to construct a LandmarkSensorModel instance.
+/// Parameters used to construct a LandmarkBearingSensorModel instance.
 /**
  * See Probabilistic Robotics \cite thrun2005probabilistic section 6.6
  */
-struct LandmarkModelParam {
-  double sigma_range{0.2};
+struct LandmarkBearingModelParam {
   double sigma_bearing{0.2};
+  Sophus::SE3d sensor_in_robot{};
 };
 
 /// Landmark model for discrete detection sensors.
 /**
- * This class implements the LandmarkSensorModelInterface2d interface
+ * This class implements the LandmarkBearingSensorModelInterface2d interface
  * and satisfies \ref SensorModelPage.
  *
  * See Probabilistic Robotics \cite thrun2005probabilistic Chapter 6.6.
@@ -59,20 +59,20 @@ struct LandmarkModelParam {
  *  It must satisfy \ref OccupancyGrid2Page.
  */
 template <class Mixin, class LandmarkMap>
-class LandmarkSensorModel : public Mixin {
+class LandmarkBearingSensorModel : public Mixin {
  public:
   /// State type of a particle.
   using state_type = Sophus::SE2d;
   /// Weight type of the particle.
   using weight_type = double;
-  /// Measurement type of the sensor: a point cloud for the range finder.
-  using measurement_type = std::vector<std::tuple<double, double, uint32_t>>;
+  /// Measurement type of the sensor: (nx, ny, nz) director vector of the bearing + category.
+  using measurement_type = std::vector<std::tuple<double, double, double, uint32_t>>;
 
   /// Parameter type that the constructor uses to configure the beam sensor
   /// model.
-  using param_type = LandmarkModelParam;
+  using param_type = LandmarkBearingModelParam;
 
-  /// Constructs a LandmarkSensorModel instance.
+  /// Constructs a LandmarkBearingSensorModel instance.
   /**
    * \tparam ...Args Arguments types for the remaining mixin constructors.
    * \param params Parameters to configure this instance.
@@ -82,7 +82,7 @@ class LandmarkSensorModel : public Mixin {
    * by others.
    */
   template <class... Args>
-  explicit LandmarkSensorModel(const param_type& params, LandmarkMap landmark_map, Args&&... rest)
+  explicit LandmarkBearingSensorModel(const param_type& params, LandmarkMap landmark_map, Args&&... rest)
       : Mixin(std::forward<Args>(rest)...), params_{params}, landmark_map_{std::move(landmark_map)} {}
 
   // TODO(ivanpauno): is sensor model the best place for this?
@@ -113,55 +113,45 @@ class LandmarkSensorModel : public Mixin {
    * \return Calculated importance weight.
    */
   [[nodiscard]] weight_type importance_weight(const state_type& state) const {
-    using bearing_rep = std::complex<double>;
-    const auto transform_r_in_w = state;
-    const auto x_offset = transform_r_in_w.translation().x();
-    const auto y_offset = transform_r_in_w.translation().y();
-    const auto cos_theta = transform_r_in_w.so2().unit_complex().x();
-    const auto sin_theta = transform_r_in_w.so2().unit_complex().y();
+    // this 2d to 3d conversion is fishy
+    const auto robot_in_world_transform = Sophus::SE3d{
+        Sophus::SO3d::rotZ(state.so2().log()), Eigen::Vector3d{state.translation().x(), state.translation().y(), 0.0}};
 
-    const auto detection_weight = [this, &transform_r_in_w, x_offset, y_offset, cos_theta,
-                                   sin_theta](const auto& point) {
-      // calculate range and bearing to the sample from the robot
-      // the sample is already in robot frame
-      const auto [px, py, id] = point;
-      const auto range = std::sqrt(px * px + py * py);
-      const auto bearing = bearing_rep{px, py};
+    // precalculate the sensor pose in the world frame
+    const auto sensor_in_world_transform = robot_in_world_transform * params_.sensor_in_robot;
 
-      // convert the sample to the world frame to query the map
-      const auto w_px = x_offset + cos_theta * px - sin_theta * py;
-      const auto w_py = y_offset + sin_theta * px + cos_theta * py;
-
-      // find the closest matching landmark in the world map
-      const auto landmark_opt = landmark_map_.find_nearest_landmark(std::make_tuple(w_px, w_py, 0., id));
+    const auto detection_weight = [this, &robot_in_world_transform, &sensor_in_world_transform](const auto& sample) {
+      // find the landmark the most closely matches the sample bearing vector
+      const auto landmark_opt = landmark_map_.find_closest_bearing_landmark(sample, sensor_in_world_transform);
 
       // if we did not find a matching landmark, return 0.0
       if (!landmark_opt) {
         return 0.0;
       }
 
-      // convert landmark pose to world frame
-      // ignore height, because we are modelling the detection in 2D
-      const auto [w_lx, w_ly, w_lz, w_lid] = *landmark_opt;
+      // recover sample bearing vector
+      const auto [s_nx, s_ny, s_nz, s_category] = sample;
 
-      const auto landmark_in_w = Sophus::SE2d{Sophus::SO2d{}, Eigen::Vector2d{w_lx, w_ly}};
-      const auto landmark_in_r = transform_r_in_w.inverse() * landmark_in_w;
+      // recover landmark bearing vector
+      const auto [l_nx, l_ny, l_nz, l_category] = landmark_opt.value();
 
-      const auto landmark_range = landmark_in_r.translation().norm();
-      const auto landmark_bearing = bearing_rep{landmark_in_r.translation().x(), landmark_in_r.translation().y()};
+      // calculate the aperture vector between the sample and the landmark
+      const auto cos_aperture = s_nx * l_nx + s_ny * l_ny + s_nz * l_nz;
+      const auto sin_aperture = std::sqrt(
+          (s_ny * l_nz - s_nz * l_ny) * (s_ny * l_nz - s_nz * l_ny) +
+          (s_nz * l_nx - s_nx * l_nz) * (s_nz * l_nx - s_nx * l_nz) +
+          (s_nx * l_ny - s_ny * l_nx) * (s_nx * l_ny - s_ny * l_nx));
 
-      const auto relative_bearing = bearing * std::conj(landmark_bearing);
+      // calculate the angle between the sample and the landmark
+      const auto bearing_error = std::atan2(sin_aperture, cos_aperture);
 
-      const auto range_error = range - landmark_range;
-      const auto bearing_error = std::arg(relative_bearing);
-
-      const auto range_error_prob =
-          std::exp(-range_error * range_error / (2. * params_.sigma_range * params_.sigma_range));
+      // model the probability of the landmark being detected as depending on the bearing error
       const auto bearing_error_prob =
           std::exp(-bearing_error * bearing_error / (2. * params_.sigma_bearing * params_.sigma_bearing));
+
       constexpr auto signature_error_prob = 1.0;  // We'll assume the identification error zero
 
-      const auto prob = range_error_prob * bearing_error_prob * signature_error_prob;
+      const auto prob = bearing_error_prob * signature_error_prob;
 
       // TODO: We continue to use the sum-of-cubes formula that nav2 uses
       // See https://github.com/Ekumen-OS/beluga/issues/153
@@ -171,11 +161,11 @@ class LandmarkSensorModel : public Mixin {
     return std::transform_reduce(points_.cbegin(), points_.cend(), 0.0, std::plus{}, detection_weight);
   }
 
-  /// \copydoc LandmarkSensorModelInterface2d::update_sensor(measurement_type&&
+  /// \copydoc LandmarkBearingSensorModelInterface2d::update_sensor(measurement_type&&
   /// points)
   void update_sensor(measurement_type&& points) final { points_ = std::move(points); }
 
-  /// \copydoc LandmarkSensorModelInterface2d::update_map(Map&& map)
+  /// \copydoc LandmarkBearingSensorModelInterface2d::update_map(Map&& map)
   void update_map(LandmarkMap&& map) final { landmark_map_ = std::move(map); }
 
  private:
