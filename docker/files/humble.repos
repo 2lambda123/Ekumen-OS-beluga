@@ -3,3 +3,7 @@ repositories:
     type: git
     url: https://github.com/avidbots/flatland.git
     version: ros2-humble
+  apriltag_ros:
+    type: git
+    url: https://github.com/Adlink-ROS/apriltag_ros.git
+    version: foxy-devel
