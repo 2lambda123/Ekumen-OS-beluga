@@ -21,8 +21,8 @@
 #include <sophus/se2.hpp>
 #include <sophus/se3.hpp>
 
-#include <beluga/algorithm/estimation.hpp>
 #include <beluga/algorithm/particle_filter.hpp>
+#include <beluga/estimation/estimation.hpp>
 #include <beluga/localization.hpp>
 #include <beluga/motion/differential_drive_model.hpp>
 #include <beluga/random/multivariate_normal_distribution.hpp>

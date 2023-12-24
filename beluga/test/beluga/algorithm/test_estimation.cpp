@@ -14,7 +14,7 @@
 
 #include <gmock/gmock.h>
 
-#include <beluga/algorithm/estimation.hpp>
+#include <beluga/estimation/estimation.hpp>
 #include <ciabatta/ciabatta.hpp>
 
 #include "beluga/test/utils/sophus_matchers.hpp"

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BELUGA_ALGORITHM_ESTIMATION_HPP
-#define BELUGA_ALGORITHM_ESTIMATION_HPP
+#ifndef BELUGA_ESTIMATION_ESTIMATION_HPP
+#define BELUGA_ESTIMATION_ESTIMATION_HPP
 
 #include <range/v3/range/access.hpp>
 #include <range/v3/range/primitives.hpp>
