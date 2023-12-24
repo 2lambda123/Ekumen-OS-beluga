@@ -35,23 +35,6 @@
  *  a particle filter.
  */
 
-/**
- * \page StateEstimatorPage Beluga named requirements: StateEstimator
- * The requirements that a state estimator must satisfy.
- *
- * \section StateEstimationRequirements Requirements
- * `T` is a `StateEstimator` if given a (possibly const) instance `p` of `T`, the following is satisfied:
- * - `p.estimate()` is a valid expression.
- * - `std::get<0>(p.estimate())` is valid.
- *   `decltype(std::get<0>(p.estimate()))` represents the type of the estimated state.
- * - `std::get<1>(p.estimate())` is valid.
- *   `decltype(std::get<1>(p.estimate()))` represents the type of the covariance of the estimation.
- *
- * \section StateEstimationLinks See also
- * - beluga::SimpleStateEstimator<Mixin, Sophus::SE2d>
- * - beluga::WeightedStateEstimator<Mixin, Sophus::SE2d>
- */
-
 namespace beluga {
 
 /// Calculates the covariance of a range given its mean and the weights of each element.

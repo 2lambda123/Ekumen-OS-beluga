@@ -28,8 +28,7 @@
 
 /**
  * \file
- * \brief Implementation of algorithms that allow calculating the estimated state of
- *  a particle filter.
+ * \brief Implementation of a simple state estimator.
  */
 
 namespace beluga {

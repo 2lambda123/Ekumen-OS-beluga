@@ -42,6 +42,7 @@
 #include <beluga/interfaces/estimation_interface.hpp>
 
 // implementations
+#include <beluga/estimation/cluster_based_estimator.hpp>
 #include <beluga/estimation/simple_state_estimator.hpp>
 #include <beluga/estimation/weighted_state_estimator.hpp>
 
