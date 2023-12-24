@@ -16,11 +16,12 @@ add_executable(
   test_beluga
   algorithm/raycasting/test_bresenham.cpp
   algorithm/test_distance_map.cpp
-  algorithm/test_estimation.cpp
   algorithm/test_exponential_filter.cpp
   algorithm/test_particle_filter.cpp
   algorithm/test_raycasting.cpp
   algorithm/test_sampling.cpp
+  estimation/test_cluster_based_estimation.cpp
+  estimation/test_estimation.cpp
   mixin/test_descriptor.cpp
   mixin/test_utility.cpp
   motion/test_differential_drive_model.cpp
