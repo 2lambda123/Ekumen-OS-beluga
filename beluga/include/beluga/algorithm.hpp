@@ -25,6 +25,5 @@
 #include <beluga/algorithm/particle_filter.hpp>
 #include <beluga/algorithm/sampling.hpp>
 #include <beluga/algorithm/spatial_hash.hpp>
-#include <beluga/estimation/estimation.hpp>
 
 #endif
