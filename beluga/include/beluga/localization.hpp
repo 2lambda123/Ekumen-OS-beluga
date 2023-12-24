@@ -17,7 +17,7 @@
 
 #include <beluga/algorithm/particle_filter.hpp>
 #include <beluga/algorithm/sampling.hpp>
-#include <beluga/estimation/estimation.hpp>
+#include <beluga/estimation.hpp>
 #include <beluga/mixin.hpp>
 #include <beluga/motion.hpp>
 #include <beluga/sensor.hpp>
