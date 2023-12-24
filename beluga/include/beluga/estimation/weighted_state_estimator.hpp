@@ -35,18 +35,18 @@
 namespace beluga {
 
 /// Primary template for a weighted state estimator.
-template <class Mixin, class State>
-class WeightedStateEstimator;
-
-/// Partial template specialization for weighted state estimator in 2D.
 /**
  * This class implements the EstimationInterface2d interface
  * and satisfies \ref StateEstimatorPage.
  *
  * It's an estimator that calculates the pose mean and covariance using all the particles.
+ *
+ * \tparam Mixin The mixin that implements the particle filter interface.
+ * \tparam StateType The type of the state to be estimated.
+ * \tparam CovarianceType The type of the covariance matrix of the state to be estimated.
  */
-template <class Mixin>
-class WeightedStateEstimator<Mixin, Sophus::SE2d> : public Mixin {
+template <class Mixin, class StateType, class CovarianceType>
+class WeightedStateEstimator : public Mixin {
  public:
   /// Constructs a WeightedStateEstimator instance.
   /**
@@ -57,14 +57,14 @@ class WeightedStateEstimator<Mixin, Sophus::SE2d> : public Mixin {
   explicit WeightedStateEstimator(Args&&... args) : Mixin(std::forward<Args>(args)...) {}
 
   /// \copydoc EstimationInterface2d::estimate()
-  [[nodiscard]] std::pair<Sophus::SE2d, Eigen::Matrix3d> estimate() const final {
+  [[nodiscard]] std::pair<StateType, CovarianceType> estimate() const final {
     return beluga::estimate(this->self().states(), this->self().weights());
   }
 };
 
 /// An alias template for the weighted state estimator in 2D.
 template <class Mixin>
-using WeightedStateEstimator2d = WeightedStateEstimator<Mixin, Sophus::SE2d>;
+using WeightedStateEstimator2d = WeightedStateEstimator<Mixin, Sophus::SE2d, Eigen::Matrix3d>;
 
 }  // namespace beluga
 
