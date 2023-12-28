@@ -23,13 +23,16 @@
 #include <queue>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
 // external
 #include <range/v3/action/sort.hpp>
+#include <range/v3/algorithm/max_element.hpp>
 #include <range/v3/numeric/accumulate.hpp>
 #include <range/v3/range/conversion.hpp>
+#include <range/v3/view/cache1.hpp>
 #include <range/v3/view/filter.hpp>
 #include <range/v3/view/zip.hpp>
 #include <sophus/se2.hpp>
@@ -241,48 +244,38 @@ void map_cells_to_clusters(
 template <class StateType, class CovarianceType, class GridCellDataMapType, class Range, class Weights, class Hashes>
 [[nodiscard]] auto
 estimate_clusters(GridCellDataMapType&& grid_cell_data, Range&& states, Weights&& weights, Hashes&& hashes) {
-  struct ClusterInfo {
-    double total_weight{0.0};
-    std::size_t particle_count{0};
-  };
-  std::unordered_map<std::size_t, ClusterInfo> cluster_info;
+  static constexpr auto weight = [](const auto& t) { return std::get<1>(t); };
+  static constexpr auto cluster = [](const auto& t) { return std::get<2>(t); };
 
-  // find out the weight of each of the clusters, along with how many clusters there are
-  for (const auto& [weight, hash] : ranges::views::zip(weights, hashes)) {
+  const auto cluster_from_hash = [&grid_cell_data](const std::size_t hash) {
     const auto& grid_cell = grid_cell_data[hash];
-    if (!grid_cell.cluster_id.has_value()) {
-      continue;
-    }
-    auto [it, inserted] = cluster_info.try_emplace(*grid_cell.cluster_id, ClusterInfo{});
-    it->second.total_weight += weight;
-    ++it->second.particle_count;
-  }
+    return grid_cell.cluster_id;
+  };
+
+  const auto has_cluster = [](const auto& t) { return cluster(t).has_value(); };
+
+  auto particles = ranges::views::zip(states, weights, hashes | ranges::views::transform(cluster_from_hash)) |
+                   ranges::views::cache1 | ranges::views::filter(has_cluster);
+
+  const auto cluster_ids = particles | ranges::views::transform(cluster) | ranges::to<std::unordered_set>;
 
   // for each cluster found, estimate the mean and covariance of the states that belong to it
   std::vector<std::tuple<double, StateType, CovarianceType>> cluster_estimates;
-  const auto mask_filter = [](const auto& sample) { return std::get<1>(sample); };
 
-  for (auto& [cluster_id, info] : cluster_info) {
-    const auto samples_in_this_cluster = [cluster_id = cluster_id, &grid_cell_data](const auto& hash) {
-      return grid_cell_data[hash].cluster_id == cluster_id;
-    };
+  for (const auto id : cluster_ids) {
+    auto filtered_particles =
+        particles | ranges::views::cache1 | ranges::views::filter([id](const auto& p) { return cluster(p) == id; });
 
-    auto mask = hashes | ranges::views::transform(samples_in_this_cluster);
-    auto masked_states = ranges::views::zip(states, mask) |     //
-                         ranges::views::filter(mask_filter) |   //
-                         beluga::views::elements<0>;            //
-    auto masked_weights = ranges::views::zip(weights, mask) |   //
-                          ranges::views::filter(mask_filter) |  //
-                          beluga::views::elements<0>;           //
-
-    const auto& [total_weight, particle_count] = info;
-
-    // if there's only one sample in the cluster we can't estimate the covariance
+    const auto particle_count = ranges::distance(filtered_particles);
     if (particle_count < 2) {
+      // if there's only one sample in the cluster we can't estimate the covariance
       continue;
     }
 
-    const auto [mean, covariance] = beluga::estimate(masked_states, masked_weights);
+    const auto total_weight = ranges::accumulate(filtered_particles, 0.0, std::plus{}, weight);
+    auto filtered_states = filtered_particles | beluga::views::elements<0>;
+    auto filtered_weights = filtered_particles | beluga::views::elements<1>;
+    const auto [mean, covariance] = beluga::estimate(filtered_states, filtered_weights);
     cluster_estimates.emplace_back(total_weight, std::move(mean), std::move(covariance));
   }
 
@@ -356,11 +349,10 @@ std::pair<StateType, CovarianceType> ClusterBasedStateEstimator<Mixin, StateType
     return beluga::estimate(this->self().states(), this->self().weights());
   }
 
-  // order by decreasing weight and return the first one
-  std::sort(per_cluster_estimates.begin(), per_cluster_estimates.end(), [](const auto& a, const auto& b) {
-    return std::get<0>(a) > std::get<0>(b);
-  });
-  return {std::get<1>(per_cluster_estimates[0]), std::get<2>(per_cluster_estimates[0])};
+  // return the element with the greater weight
+  const auto [_, mean, covariance] =
+      *ranges::max_element(per_cluster_estimates, std::less{}, [](const auto& t) { return std::get<0>(t); });
+  return {mean, covariance};
 }
 
 /// An alias template for the simple state estimator in 2D.
