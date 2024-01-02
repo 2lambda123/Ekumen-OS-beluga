@@ -67,7 +67,7 @@ struct ClusterBasedEstimationDetailTesting : public testing::Test {
     const auto xwidth = xmax - xmin;
     const auto ywidth = ymax - ymin;
 
-    // simulate particles in a grid with (phases x phases) clusters with
+    // simulate particles in a grid with 4 (2x2) clusters with
     // different peak heights. The highest on is the one located on the
     // higher-right.
 
@@ -246,7 +246,7 @@ TEST_F(ClusterBasedEstimationDetailTesting, MapGridCellsToClustersStep) {
     return spatial_hash_function(state);
   };
 
-  const auto hash_to_id = [&](const auto& hash) { return map[hash].cluster_id ? map[hash].cluster_id.value() : 9999; };
+  const auto hash_to_id = [&](const auto& hash) { return map[hash].cluster_id.value(); };
 
   auto quadrant_1_unique_ids = quadrant_1_view |                          //
                                ranges::views::transform(coord_to_hash) |  //
@@ -307,7 +307,7 @@ TEST_F(ClusterBasedEstimationDetailTesting, ClusterStatEstimationStep) {
   cap_grid_cell_data_weights(grid_cell_data, weight_cap);
   map_cells_to_clusters(grid_cell_data, spatial_hash_function, adjacent_grid_cells, weight_cap);
 
-  auto per_cluster_estimates = estimate_clusters<SE2d, Matrix3d>(grid_cell_data, states, weights, hashes);
+  auto per_cluster_estimates = estimate_clusters(grid_cell_data, states, weights, hashes);
 
   // check that the number of clusters is correct
   ASSERT_EQ(per_cluster_estimates.size(), 4);
