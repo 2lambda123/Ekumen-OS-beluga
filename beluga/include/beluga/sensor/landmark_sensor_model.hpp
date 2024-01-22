@@ -174,14 +174,10 @@ class LandmarkSensorModel : public Mixin {
           std::exp(-bearing_error * bearing_error / (2. * params_.sigma_bearing * params_.sigma_bearing));
 
       // We'll assume the probability of identification error to be zero
-      const auto prob = range_error_prob * bearing_error_prob;
-
-      // TODO(unknown): We continue to use the sum-of-cubes formula that nav2 uses
-      // See https://github.com/Ekumen-OS/beluga/issues/153
-      return prob * prob * prob;
+      return range_error_prob * bearing_error_prob;
     };
 
-    return std::transform_reduce(points_.cbegin(), points_.cend(), 1.0, std::plus{}, detection_weight);
+    return std::transform_reduce(points_.cbegin(), points_.cend(), 1.0, std::multiplies{}, detection_weight);
   }
 
   /// \copydoc LandmarkSensorModelInterface::update_sensor(measurement_type&&points)
