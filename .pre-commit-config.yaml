@@ -26,7 +26,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v17.0.6
+    rev: v18.1.2
     hooks:
       - id: clang-format
 
@@ -37,7 +37,7 @@ repos:
         additional_dependencies: [flake8-docstrings]
 
   - repo: https://github.com/psf/black
-    rev:  24.2.0
+    rev:  24.3.0
     hooks:
       - id: black
         args: [--skip-string-normalization]
