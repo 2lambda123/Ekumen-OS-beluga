@@ -14,7 +14,7 @@ repos:
         language_version: python3
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: check-ast
       - id: check-docstring-first
@@ -26,7 +26,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v19.1.0
+    rev: v19.1.1
     hooks:
       - id: clang-format
 
